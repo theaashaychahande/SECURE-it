@@ -37,6 +37,9 @@ dependencies:
   google_fonts: ^8.0.2
   provider: ^6.1.5+1
   http: ^1.2.1
+  flutter_accessibility_service: ^1.0.0
+  flutter_overlay_window: ^0.5.0
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

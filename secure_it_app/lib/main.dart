@@ -7,7 +7,26 @@ import 'screens/settings_screen.dart';
 import 'screens/education_card_screen.dart';
 import 'screens/onboarding_screen.dart';
 
+import 'services/automation_service.dart';
+import 'widgets/scam_overlay_widget.dart';
+
+@pragma('vm:entry-point')
+void overlayMain() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: const ScamOverlayWidget(),
+    ),
+  );
+}
+
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Start the background monitor
+  AutomationService().startMonitoring();
+
   runApp(
     MultiProvider(
       providers: [

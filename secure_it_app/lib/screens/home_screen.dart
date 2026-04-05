@@ -4,6 +4,9 @@ import '../providers/app_state_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/warning_overlay_card.dart';
 
+import 'package:flutter_accessibility_service/flutter_accessibility_service.dart';
+import 'package:flutter_overlay_window/flutter_overlay_window.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -13,6 +16,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _amountController = TextEditingController();
+  bool _isAccessibilityEnabled = false;
+  bool _isOverlayEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    final access = await FlutterAccessibilityService.isAccessibilityPermissionEnabled();
+    final overlay = await FlutterOverlayWindow.isPermissionGranted();
+    if (mounted) {
+      setState(() {
+        _isAccessibilityEnabled = access;
+        _isOverlayEnabled = overlay;
+      });
+    }
+  }
 
   void _showWarning(BuildContext context, Map<String, dynamic> result) {
     showDialog(
@@ -80,7 +102,50 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 40),
+              // Security Status Card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[900],
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.flash_on, color: Colors.amber),
+                        const SizedBox(width: 12),
+                        Text(
+                          "AUTO-DEFENSE ENGINE",
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.amber, letterSpacing: 1.1),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _PermissionItem(
+                      label: "Accessibility Monitor",
+                      status: _isAccessibilityEnabled,
+                      onTap: () async {
+                        await FlutterAccessibilityService.requestAccessibilityPermission();
+                        _checkPermissions();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _PermissionItem(
+                      label: "System Warning Overlay",
+                      status: _isOverlayEnabled,
+                      onTap: () async {
+                        await FlutterOverlayWindow.requestPermission();
+                        _checkPermissions();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
               TweenAnimationBuilder<double>(
                 tween: Tween(begin: 0.8, end: 1.0),
                 duration: const Duration(seconds: 2),
@@ -151,6 +216,61 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PermissionItem extends StatelessWidget {
+  final String label;
+  final bool status;
+  final VoidCallback onTap;
+
+  const _PermissionItem({
+    required this.label,
+    required this.status,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: status ? AppTheme.accentTeal.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: status ? AppTheme.accentTeal.withOpacity(0.5) : Colors.red.withOpacity(0.5),
+                ),
+              ),
+              child: Text(
+                status ? "ACTIVE" : "SETUP",
+                style: TextStyle(
+                  color: status ? AppTheme.accentTeal : Colors.red,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
